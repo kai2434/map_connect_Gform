@@ -120,7 +120,7 @@ describe('1. 地域選択および地域設定バリデーションのテスト'
     }
   });
 
-  it('複数の募集地域がカードとして一覧表示され、サムネイル未設定地域には共通プレースホルダーが設定される', () => {
+  it('複数の募集地域がカードとして一覧表示され、サムネイル未設定地域では上部のプレースホルダー枠を表示しない', () => {
     app = new PhotoSpotApp({ rootElement: rootEl, regions: REGIONS });
     app.start();
 
@@ -128,13 +128,19 @@ describe('1. 地域選択および地域設定バリデーションのテスト'
     assert.equal(cards.length, REGIONS.length);
     assert.ok(cards.length >= 2, '複数の地域が表示されること');
 
-    // サムネイル未設定地域に共通プレースホルダー画像が入ることを確認
+    // サムネイル設定済み地域にはサムネイルが表示されることを確認
+    const customThumbRegion = REGIONS.find((region) => Boolean(region.thumbnail));
+    assert.ok(customThumbRegion, 'サムネイル設定済みのfixture地域が存在すること');
+    const customThumbCard = rootEl.querySelector(`[data-region-id="${customThumbRegion.id}"]`);
+    assert.ok(customThumbCard?.querySelector('img.region-card__thumb'), '設定済みサムネイルが表示されること');
+
+    // サムネイル未設定地域には上部のプレースホルダー画像枠（募集対象地域マップ）を表示しないことを確認
     const placeholderRegion = REGIONS.find((region) => !region.thumbnail);
     assert.ok(placeholderRegion, 'サムネイル未設定のfixture地域が存在すること');
     const placeholderCard = rootEl.querySelector(`[data-region-id="${placeholderRegion.id}"]`);
     assert.ok(placeholderCard, 'サムネイル未設定地域のカードが存在すること');
     const img = placeholderCard.querySelector('img.region-card__thumb');
-    assert.ok(img && img.src.startsWith('data:image/svg+xml'), '共通プレースホルダーが表示されること');
+    assert.equal(img, null, 'サムネイル未設定時は上部の画像ボックスが表示されないこと');
   });
 
   it('地域カードを選択すると該当地域の地図画面に切り替わる', () => {

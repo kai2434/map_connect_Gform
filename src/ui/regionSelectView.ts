@@ -185,36 +185,41 @@ function createRegionCard(
   article.setAttribute('role', 'listitem');
   article.setAttribute('data-region-id', region.id);
 
-  const placeholderUrl = getCommonPlaceholderThumbnail();
-  const thumbnailUrl =
-    region.thumbnail && region.thumbnail.trim().length > 0
-      ? region.thumbnail.trim()
-      : placeholderUrl;
+  const hasCustomThumbnail = Boolean(region.thumbnail && region.thumbnail.trim().length > 0);
+  if (hasCustomThumbnail) {
+    const placeholderUrl = getCommonPlaceholderThumbnail();
+    const thumbnailUrl = region.thumbnail!.trim();
 
-  const thumbWrapper = document.createElement('div');
-  thumbWrapper.className = 'region-card__thumb-wrapper';
+    const thumbWrapper = document.createElement('div');
+    thumbWrapper.className = 'region-card__thumb-wrapper';
 
-  const img = document.createElement('img');
-  img.className = 'region-card__thumb';
-  img.src = thumbnailUrl;
-  img.alt = `${region.name}のサムネイル画像`;
-  img.loading = 'lazy';
-  // 画像読み込み失敗時も共通プレースホルダーへフォールバック
-  img.addEventListener('error', () => {
-    if (img.src !== placeholderUrl) {
-      img.src = placeholderUrl;
+    const img = document.createElement('img');
+    img.className = 'region-card__thumb';
+    img.src = thumbnailUrl;
+    img.alt = `${region.name}のサムネイル画像`;
+    img.loading = 'lazy';
+    // 画像読み込み失敗時も共通プレースホルダーへフォールバック
+    img.addEventListener('error', () => {
+      if (img.src !== placeholderUrl) {
+        img.src = placeholderUrl;
+      }
+    });
+    thumbWrapper.appendChild(img);
+
+    if (region.isSample) {
+      const sampleBadge = document.createElement('span');
+      sampleBadge.className = 'region-card__sample-badge';
+      sampleBadge.textContent = 'サンプルデータ';
+      thumbWrapper.appendChild(sampleBadge);
     }
-  });
-  thumbWrapper.appendChild(img);
 
-  if (region.isSample) {
-    const sampleBadge = document.createElement('span');
-    sampleBadge.className = 'region-card__sample-badge';
-    sampleBadge.textContent = 'サンプルデータ';
-    thumbWrapper.appendChild(sampleBadge);
+    thumbWrapper.style.cursor = 'pointer';
+    thumbWrapper.addEventListener('click', () => {
+      onSelect(region.id);
+    });
+
+    article.appendChild(thumbWrapper);
   }
-
-  article.appendChild(thumbWrapper);
 
   const body = document.createElement('div');
   body.className = 'region-card__body';
@@ -254,11 +259,6 @@ function createRegionCard(
     onSelect(region.id);
   });
 
-  // カード全体のクリックでも遷移可能にする（キーボード操作はボタンに集約）
-  thumbWrapper.style.cursor = 'pointer';
-  thumbWrapper.addEventListener('click', () => {
-    onSelect(region.id);
-  });
   titleEl.style.cursor = 'pointer';
   titleEl.addEventListener('click', () => {
     onSelect(region.id);
