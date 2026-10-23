@@ -29,8 +29,11 @@ export function renderRegionSelectView(
   header.className = 'site-header';
   header.innerHTML = `
     <div class="site-header__inner">
-      <div class="site-header__badge-row">
+      <div class="site-header__badge-row" style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;">
         <span class="badge badge--primary">地域別写真募集プロジェクト</span>
+        <a href="./viewer.html" class="btn btn--secondary btn--small" data-testid="open-viewer-link" style="text-decoration: none; font-size: 0.8rem; padding: 0.32rem 0.7rem;">
+          🗺️ 投稿写真＆コメントビューワーを開く
+        </a>
       </div>
       <h1 class="site-header__title">撮影地点を指定して写真を投稿</h1>
       <p class="site-header__lead">

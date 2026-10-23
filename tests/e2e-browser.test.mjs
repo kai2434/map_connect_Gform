@@ -919,4 +919,76 @@ describe('実ブラウザ（Google Chrome + Playwright）によるE2E総合検�
 
     await unconfiguredContext.close();
   });
+
+  it('9. [投稿写真＆コメント マップビューワー (viewer.html)] 3パターン（写真のみ / コメントのみ / 写真＆コメント両方）のピン表示、ホバー拡大カード、クリックポップアップ、ライトボックス、フィルタ動作の実ブラウザ検証', async () => {
+    const context = await browser.newContext({ viewport: { width: 1366, height: 860 } });
+    const page = await context.newPage();
+
+    await page.route(TILE_URL_PATTERN, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        body: DUMMY_PNG_BUFFER,
+      });
+    });
+
+    await page.goto(`${baseUrl}/viewer.html`, { waitUntil: 'networkidle' });
+    await page.waitForSelector('[data-testid="viewer-map-canvas"].leaflet-container');
+
+    // 1. 初期状態でデモデータ6件（うち地図ピン5件、Lv.0地域のみ1件）が展開されていること
+    const totalStat = await page.locator('[data-testid="stats-total-count"]').innerText();
+    const pinnedStat = await page.locator('[data-testid="stats-pinned-count"]').innerText();
+    assert.equal(totalStat, '6', 'デモデータ全6件が表示されること');
+    assert.equal(pinnedStat, '5', '座標あり5件のピンが地図上に展開されること');
+
+    // 2. 地図上に3パターンのピン（photo-and-comment, photo-only, comment-only）が存在し、空枠がないこと
+    const pinsBoth = page.locator('[data-testid="viewer-map-pin"][data-content-type="photo-and-comment"]');
+    const pinsPhotoOnly = page.locator('[data-testid="viewer-map-pin"][data-content-type="photo-only"]');
+    const pinsCommentOnly = page.locator('[data-testid="viewer-map-pin"][data-content-type="comment-only"]');
+
+    assert.equal(await pinsBoth.count(), 2, '写真＆コメント両方のピンが2件存在すること');
+    assert.equal(await pinsPhotoOnly.count(), 1, '写真のみのピンが1件存在すること');
+    assert.equal(await pinsCommentOnly.count(), 2, 'コメントのみのピンが2件存在すること');
+
+    // コメントのみのピンには <img> 要素が含まれず、吹き出しピルが表示されていること
+    const commentPinImgCount = await pinsCommentOnly.first().locator('img').count();
+    assert.equal(commentPinImgCount, 0, 'コメントのみのピンには空の画像タグが出力されないこと');
+
+    // 3. ピンにカーソルを合わせる（Hover）と拡大プレビューカード（.viewer-hover-card）が表示されること
+    await pinsBoth.first().dispatchEvent('mouseover', { bubbles: true });
+    const hoverCard = page.locator('.leaflet-tooltip .viewer-hover-card--photo-and-comment').first();
+    await hoverCard.waitFor({ state: 'visible' });
+    assert.equal(await hoverCard.locator('.viewer-hover-card__img').count(), 1, '写真＆コメントピンのホバーで拡大写真が表示されること');
+    assert.equal(await hoverCard.locator('.viewer-hover-card__comment-text').count(), 1, '写真＆コメントピンのホバーでコメントが表示されること');
+    await pinsBoth.first().dispatchEvent('mouseout', { bubbles: true });
+
+    // 4. 写真のみのピンをクリックすると詳細ポップアップが開き、写真が表示され空のコメント枠は出ないこと
+    await pinsPhotoOnly.first().click({ force: true });
+    const popupCard = page.locator('.leaflet-popup [data-testid="viewer-popup-card"]');
+    await popupCard.waitFor({ state: 'visible' });
+    assert.equal(await popupCard.locator('.viewer-popup-card__img').count(), 1, '写真のみポップアップに写真が表示されること');
+    assert.equal(await popupCard.locator('[data-testid="viewer-popup-comment"]').count(), 0, '写真のみポップアップには空のコメント枠が表示されないこと');
+
+    // 5. ポップアップ内の「🔍 写真を拡大表示」をクリックするとフルスクリーンライトボックスが開くこと
+    await popupCard.locator('[data-testid="popup-open-lightbox-btn"]').click();
+    const lightbox = page.locator('[data-testid="viewer-lightbox-modal"]');
+    await lightbox.waitFor({ state: 'visible' });
+    assert.equal(await lightbox.locator('[data-testid="lightbox-main-img"]').isVisible(), true, 'ライトボックス内に拡大写真が表示されること');
+    await lightbox.locator('[data-testid="lightbox-close-btn"]').click();
+    await lightbox.waitFor({ state: 'detached' });
+
+    // 6. コメントのみの投稿の「📍 地図で場所を見る」ボタン（またはピン）をクリックすると詳細ポップアップにコメントが表示され、空の写真枠が出ないこと
+    await page.locator('[data-testid="viewer-sidebar-card"][data-content-type="comment-only"] [data-testid="focus-pin-btn"]').first().click();
+    const commentPopup = page.locator('.leaflet-popup .viewer-popup-card--comment-only');
+    await commentPopup.waitFor({ state: 'visible' });
+    assert.equal(await commentPopup.locator('.viewer-popup-card__img').count(), 0, 'コメントのみポップアップに空の写真枠が出ないこと');
+    assert.equal(await commentPopup.locator('[data-testid="viewer-popup-comment"]').isVisible(), true, 'コメントのみポップアップにコメント本文が表示されること');
+
+    // 7. コンテンツ種別フィルタで「💬 コメントのみ」に絞り込めること
+    await page.locator('[data-testid="filter-content-select"]').selectOption('comment-only');
+    assert.equal(await page.locator('[data-testid="stats-total-count"]').innerText(), '2', 'コメントのみの2件に絞り込まれること');
+    assert.equal(await page.locator('[data-testid="viewer-sidebar-card"]').count(), 2);
+
+    await context.close();
+  });
 });

@@ -75,6 +75,13 @@ const { validateGoogleFormConfig, buildGoogleFormUrl } = await import(
   pathToFileURL(path.join(buildDir, 'domain/googleFormUrlBuilder.js')).href
 );
 const { PhotoSpotApp } = await importBuiltModule('app.js');
+const {
+  parseRawCsvRows,
+  detectCsvColumnMapping,
+  parseSubmissionCsv,
+  matchImagesToRecords,
+} = await importBuiltModule('viewer/csvParser.js');
+const { createDemoCsvText, createDemoLocalImages } = await importBuiltModule('viewer/demoData.js');
 const L = await importBuiltModule('vendor/leaflet/leaflet-src.esm.js');
 
 /**
@@ -867,3 +874,77 @@ describe('5. UI・レスポンシブ構造・地図出典表記・確認モー�
     assert.ok(proceedLink.href.includes('entry.444444444=50'));
   });
 });
+
+describe('6. 投稿写真＆コメントマップビューワー（CSV解析・7問目コメント・3パターン判定・画像自動紐付け）の検証', () => {
+  it('Googleフォームの7問構成CSV（タイムスタンプ＋7問目コメント）を正しく解析し、①写真＆コメント両方・②写真のみ・③コメントのみ・Lv.0地域のみを正確に分類できる', () => {
+    const demoCsv = createDemoCsvText();
+    const demoImages = createDemoLocalImages();
+    const parsed = parseSubmissionCsv(demoCsv, REGIONS, demoImages);
+
+    assert.equal(parsed.headers.length, 8, 'タイムスタンプ＋7問の計8列が検出されること');
+    assert.equal(parsed.mapping.commentCol, 7, '7問目（インデックス7）がコメント列として検出されること');
+    assert.equal(parsed.records.length, 6, 'デモデータ6件が解析されること');
+
+    // 1件目：写真＆コメント両方（改行を含むコメント）
+    const rec1 = parsed.records[0];
+    assert.equal(rec1.contributorName, '佐藤花子');
+    assert.equal(rec1.contentType, 'photo-and-comment');
+    assert.equal(rec1.imageUrls.length, 1);
+    assert.ok(rec1.comment.includes('夕暮れ時に灯籠に明かりが灯り始めた瞬間'));
+    assert.ok(rec1.comment.includes('\n'), 'コメント内の改行が保持されていること');
+
+    // 2件目：写真のみ（コメント空欄）
+    const rec2 = parsed.records[1];
+    assert.equal(rec2.contributorName, '鈴木一郎');
+    assert.equal(rec2.contentType, 'photo-only');
+    assert.equal(rec2.imageUrls.length, 1);
+    assert.equal(rec2.comment, '');
+    assert.equal(rec2.accuracyRadius, 50);
+
+    // 3件目：コメントのみ（写真なし）
+    const rec3 = parsed.records[2];
+    assert.equal(rec3.contributorName, '田中翔太');
+    assert.equal(rec3.contentType, 'comment-only');
+    assert.equal(rec3.imageUrls.length, 0);
+    assert.ok(rec3.comment.includes('コメントのみの投稿サンプル'));
+    assert.equal(rec3.accuracyRadius, 150);
+
+    // 6件目：地域のみ（Lv.0・座標なし）
+    const rec6 = parsed.records[5];
+    assert.equal(rec6.contributorName, '伊藤美咲');
+    assert.equal(rec6.latitude, null);
+    assert.equal(rec6.longitude, null);
+    assert.equal(rec6.accuracyRadius, null);
+    assert.equal(rec6.contentType, 'photo-and-comment');
+  });
+
+  it('Googleフォームの保存ファイル名「<元ファイル名> - <撮影者名>.jpg」や順番フォールバックでローカル画像を紐付け、写真なし行（コメントのみ）には誤って画像を割り当てない', () => {
+    const customCsv = [
+      'タイムスタンプ,地域ID,緯度,経度,位置精度半径（m）,撮影者名,写真ファイル,最後の質問（自由記述）',
+      '2026/10/24 12:00:00,kurama-kibune,35.120000,135.765000,0,山田太郎,https://drive.google.com/open?id=AAA,"写真とコメントの両方です"',
+      '2026/10/24 12:05:00,kurama-kibune,35.121000,135.766000,50,佐々木希,,"写真は送らずコメントだけ送ります"',
+      '2026/10/24 12:10:00,kurama-kibune,35.122000,135.767000,150,木村拓哉,https://drive.google.com/open?id=BBB,""',
+    ].join('\r\n');
+
+    const localImgs = [
+      { key: 'img-1', fileName: 'DSC_0001 - 山田太郎.jpg', url: 'blob:test-yamada', size: 100 },
+      { key: 'img-2', fileName: 'unmatched_random_name.jpg', url: 'blob:test-kimura', size: 200 },
+    ];
+
+    const res = parseSubmissionCsv(customCsv, REGIONS, localImgs);
+    assert.equal(res.records.length, 3);
+
+    // 1行目：撮影者名「山田太郎」でマッチ -> photo-and-comment
+    assert.equal(res.records[0].imageUrls[0], 'blob:test-yamada');
+    assert.equal(res.records[0].contentType, 'photo-and-comment');
+
+    // 2行目：写真列が空欄なので画像が誤割当されず comment-only を維持
+    assert.equal(res.records[1].imageUrls.length, 0);
+    assert.equal(res.records[1].contentType, 'comment-only');
+
+    // 3行目：写真列にDrive URLがあるため残りの未使用画像がフォールバック割当 -> photo-only
+    assert.equal(res.records[2].imageUrls[0], 'blob:test-kimura');
+    assert.equal(res.records[2].contentType, 'photo-only');
+  });
+});
+

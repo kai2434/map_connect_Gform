@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev-server.mjs",
+    "viewer": "node scripts/dev-server.mjs",
     "build": "node scripts/build.mjs",
     "preview": "node scripts/dev-server.mjs --dist",
     "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit",

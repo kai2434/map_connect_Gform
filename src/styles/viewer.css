@@ -1,0 +1,1207 @@
+/* ==========================================================================
+   投稿写真＆コメント マップビューワー（viewer.html）専用スタイル
+   - ①写真のみ (photo-only)
+   - ②コメントのみ (comment-only)
+   - ③写真＆コメント両方 (photo-and-comment)
+   の3パターンすべてが欠けや空枠なく美しく表示されるよう設計
+   ========================================================================== */
+
+.viewer-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  height: 100dvh;
+  background: #f1f5f9;
+  color: #0f172a;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   1. ヘッダー＆ファイル読み込みツールバー
+   -------------------------------------------------------------------------- */
+.viewer-header {
+  background: #ffffff;
+  border-bottom: 1px solid #cbd5e1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  z-index: 20;
+  flex-shrink: 0;
+}
+
+.viewer-header__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.65rem 1.15rem;
+}
+
+.viewer-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.viewer-header__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.viewer-header__title {
+  margin: 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.viewer-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.viewer-upload-btn,
+.viewer-demo-btn,
+.viewer-back-link {
+  font-size: 0.82rem;
+  padding: 0.42rem 0.78rem;
+  min-height: 2.15rem;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.viewer-status-bar {
+  padding: 0.38rem 1.15rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.viewer-status-bar--info {
+  background: #f0f9ff;
+  color: #0c4a6e;
+  border-top-color: #bae6fd;
+}
+
+.viewer-status-bar--success {
+  background: #f0fdf4;
+  color: #14532d;
+  border-top-color: #bbf7d0;
+}
+
+.viewer-status-bar--warning {
+  background: #fffbeb;
+  color: #78350f;
+  border-top-color: #fde68a;
+}
+
+.viewer-status-bar--error {
+  background: #fef2f2;
+  color: #7f1d1d;
+  border-top-color: #fecaca;
+}
+
+/* --------------------------------------------------------------------------
+   2. ワークスペース（左：地図＋Lv.0バー / 右：サイドバー）
+   -------------------------------------------------------------------------- */
+.viewer-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 410px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.viewer-map-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  background: #e2e8f0;
+}
+
+.viewer-map-container {
+  flex: 1;
+  width: 100%;
+  min-height: 300px;
+  z-index: 1;
+}
+
+.viewer-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.45rem 0.9rem;
+  background: #ffffff;
+  border-top: 1px solid #cbd5e1;
+  font-size: 0.77rem;
+  color: #334155;
+  flex-shrink: 0;
+}
+
+.viewer-map-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.viewer-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.viewer-legend-dot--both {
+  background: #0284c7;
+  box-shadow: 0 0 0 2px #bae6fd;
+}
+
+.viewer-legend-dot--photo {
+  background: #2563eb;
+}
+
+.viewer-legend-dot--comment {
+  background: #0d9488;
+}
+
+.viewer-map-legend__hint {
+  margin-left: auto;
+  color: #475569;
+  font-size: 0.74rem;
+}
+
+/* --------------------------------------------------------------------------
+   3. 地図上のカスタムピン（3パターン対応）
+   -------------------------------------------------------------------------- */
+.viewer-pin-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+.viewer-pin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(0.22, 1, 0.36, 1), filter 0.16s ease;
+  transform-origin: bottom center;
+}
+
+.viewer-pin:hover,
+.viewer-pin:focus-visible {
+  transform: scale(1.16) translateY(-3px);
+  z-index: 999 !important;
+  filter: drop-shadow(0 8px 14px rgba(15, 23, 42, 0.32));
+}
+
+/* パターン1 & 3: 写真付きピン */
+.viewer-pin--photo .viewer-pin__frame {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 3px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.28);
+  border: 2.5px solid #2563eb;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.viewer-pin--photo.viewer-pin--has-comment .viewer-pin__frame {
+  border-color: #0284c7;
+}
+
+.viewer-pin__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.viewer-pin__comment-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.25);
+}
+
+.viewer-pin__count-badge {
+  position: absolute;
+  bottom: 12px;
+  left: -4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1.5px solid #ffffff;
+}
+
+.viewer-pin__tip {
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid #2563eb;
+  margin-top: -1px;
+}
+
+.viewer-pin--has-comment .viewer-pin__tip {
+  border-top-color: #0284c7;
+}
+
+/* パターン2: コメントのみピン（吹き出しピル型） */
+.viewer-pin--comment-only .viewer-pin__bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 132px;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.26);
+  border: 2px solid #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer-pin__bubble-icon {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.viewer-pin__bubble-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer-pin__tip--comment {
+  border-top-color: #0f766e;
+}
+
+/* --------------------------------------------------------------------------
+   4. ピンホバー時の拡大プレビューカード（L.tooltip）
+   -------------------------------------------------------------------------- */
+.leaflet-tooltip.viewer-hover-tooltip {
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.leaflet-tooltip.viewer-hover-tooltip::before {
+  display: none;
+}
+
+.viewer-hover-card {
+  width: 270px;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.25);
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  font-family: inherit;
+  white-space: normal;
+}
+
+.viewer-hover-card__media {
+  position: relative;
+  width: 100%;
+  height: 165px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.viewer-hover-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.viewer-hover-card__multi {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.viewer-hover-card__body {
+  padding: 0.65rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.viewer-hover-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.viewer-hover-card__author {
+  font-size: 0.86rem;
+  color: #0f172a;
+}
+
+.viewer-hover-card__region {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.viewer-hover-card__comment {
+  background: #f8fafc;
+  border-left: 3px solid #0284c7;
+  padding: 0.42rem 0.55rem;
+  border-radius: 4px 8px 8px 4px;
+}
+
+.viewer-hover-card__comment--featured {
+  background: #f0fdfa;
+  border-left-color: #0d9488;
+  padding: 0.6rem 0.7rem;
+}
+
+.viewer-hover-card__comment-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #1e293b;
+  word-break: break-word;
+}
+
+.viewer-hover-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-top: 0.2rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.71rem;
+}
+
+.viewer-hover-card__badge {
+  color: #475569;
+  font-weight: 600;
+}
+
+.viewer-hover-card__hint {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+/* --------------------------------------------------------------------------
+   5. ピンクリック時の詳細ポップアップ（L.popup）
+   -------------------------------------------------------------------------- */
+.viewer-detail-popup .leaflet-popup-content-wrapper {
+  padding: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.24);
+}
+
+.viewer-detail-popup .leaflet-popup-content {
+  margin: 0 !important;
+  width: 300px !important;
+}
+
+.viewer-popup-card {
+  display: flex;
+  flex-direction: column;
+  font-family: inherit;
+  color: #0f172a;
+}
+
+.viewer-popup-card__header {
+  padding: 0.75rem 0.9rem 0.55rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.viewer-popup-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-right: 1.2rem;
+}
+
+.viewer-popup-card__author {
+  font-size: 0.92rem;
+  color: #0f172a;
+}
+
+.viewer-popup-card__region-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.viewer-popup-card__time {
+  margin-top: 0.2rem;
+  font-size: 0.73rem;
+  color: #64748b;
+}
+
+.viewer-popup-card__media {
+  position: relative;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+}
+
+.viewer-popup-card__img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  cursor: zoom-in;
+  display: block;
+}
+
+.viewer-popup-card__zoom-btn {
+  margin: 0.5rem 0.75rem;
+  background: #1d4ed8;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 0.42rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.viewer-popup-card__zoom-btn:hover {
+  background: #1e40af;
+}
+
+.viewer-popup-card__comment-box {
+  margin: 0.65rem 0.85rem 0.35rem;
+  padding: 0.6rem 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #0284c7;
+  border-radius: 8px;
+}
+
+.viewer-popup-card__comment-box--hero {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  border-left: 4px solid #0d9488;
+  margin-top: 0.8rem;
+}
+
+.viewer-popup-card__comment-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #0369a1;
+  margin-bottom: 0.28rem;
+}
+
+.viewer-popup-card__comment-box--hero .viewer-popup-card__comment-label {
+  color: #0f766e;
+}
+
+.viewer-popup-card__comment-text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: #0f172a;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.viewer-popup-card__meta-footer {
+  padding: 0.55rem 0.85rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+  font-size: 0.74rem;
+  color: #475569;
+}
+
+.viewer-popup-card__meta-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.viewer-popup-card__meta-code {
+  font-size: 0.71rem;
+  background: #f1f5f9;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   6. 地域のみ（Lv.0・座標なし）下部ギャラリーバー
+   -------------------------------------------------------------------------- */
+.viewer-region-only-bar {
+  background: #fffbeb;
+  border-top: 1px solid #fde68a;
+  padding: 0.5rem 0.9rem;
+  flex-shrink: 0;
+  max-height: 135px;
+  overflow-y: auto;
+}
+
+.viewer-region-only-bar__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  color: #92400e;
+  margin-bottom: 0.4rem;
+}
+
+.viewer-region-only-bar__strip {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.viewer-region-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #fcd34d;
+  cursor: pointer;
+  text-align: left;
+  min-width: 210px;
+  max-width: 280px;
+  flex-shrink: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.viewer-region-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+.viewer-region-chip__thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.viewer-region-chip__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: #f0fdfa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.viewer-region-chip__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.viewer-region-chip__author {
+  font-size: 0.76rem;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewer-region-chip__snippet {
+  font-size: 0.71rem;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --------------------------------------------------------------------------
+   7. 右サイドバー（フィルタ・統計・3パターン対応投稿カード一覧）
+   -------------------------------------------------------------------------- */
+.viewer-sidebar {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-left: 1px solid #cbd5e1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.viewer-filters {
+  padding: 0.75rem 0.9rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.viewer-filters__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.viewer-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.viewer-filter-field__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.viewer-filter-select,
+.viewer-filter-input {
+  width: 100%;
+  padding: 0.38rem 0.55rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.viewer-stats-bar {
+  padding: 0.5rem 0.9rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  flex-shrink: 0;
+}
+
+.viewer-stats__sub {
+  color: #64748b;
+  font-size: 0.72rem;
+}
+
+.viewer-stats__breakdown {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.viewer-stat-pill {
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.viewer-stat-pill--both {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.viewer-stat-pill--photo {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.viewer-stat-pill--comment {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.viewer-card-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: #f1f5f9;
+}
+
+.viewer-card {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.viewer-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.viewer-card.is-active {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+}
+
+.viewer-card__header {
+  padding: 0.65rem 0.8rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.viewer-card__badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.viewer-card__type-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+}
+
+.viewer-card__type-badge--photo-and-comment {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.viewer-card__type-badge--photo-only {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.viewer-card__type-badge--comment-only {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.viewer-card__region-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+}
+
+.viewer-card__author-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.viewer-card__author {
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.viewer-card__time {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.viewer-card__media {
+  position: relative;
+  width: 100%;
+  height: 155px;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.viewer-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.22s ease;
+}
+
+.viewer-card__media:hover .viewer-card__img {
+  transform: scale(1.03);
+}
+
+.viewer-card__zoom-chip {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.78);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.viewer-card__comment {
+  margin: 0.55rem 0.8rem 0.2rem;
+  padding: 0.55rem 0.7rem;
+  background: #f8fafc;
+  border-left: 3.5px solid #0284c7;
+  border-radius: 4px 8px 8px 4px;
+}
+
+.viewer-card__comment--featured {
+  background: #f0fdfa;
+  border-left-color: #0d9488;
+  padding: 0.7rem 0.8rem;
+  margin-top: 0.15rem;
+}
+
+.viewer-card__comment-text {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: #1e293b;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.viewer-card__footer {
+  padding: 0.55rem 0.8rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 0.35rem;
+}
+
+.viewer-card__loc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.viewer-card__accuracy-badge {
+  font-size: 0.72rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.viewer-card__focus-btn {
+  font-size: 0.74rem;
+  padding: 0.25rem 0.55rem;
+  min-height: 1.75rem;
+}
+
+.viewer-card__assign-select {
+  width: 100%;
+  font-size: 0.73rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+}
+
+/* --------------------------------------------------------------------------
+   8. フルスクリーン拡大ライトボックスモーダル
+   -------------------------------------------------------------------------- */
+.viewer-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(4px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.viewer-lightbox__dialog {
+  width: min(1040px, 100%);
+  max-height: 92vh;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.45);
+}
+
+.viewer-lightbox__dialog--comment-only {
+  width: min(640px, 100%);
+}
+
+.viewer-lightbox__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.viewer-lightbox__title-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.viewer-lightbox__type-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.viewer-lightbox__author {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.viewer-lightbox__region {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.viewer-lightbox__time {
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.viewer-lightbox__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 1fr);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.viewer-lightbox__dialog--photo-only .viewer-lightbox__content {
+  grid-template-columns: minmax(0, 1.75fr) minmax(240px, 0.85fr);
+}
+
+.viewer-lightbox__dialog--comment-only .viewer-lightbox__content {
+  grid-template-columns: 1fr;
+}
+
+.viewer-lightbox__photo-stage {
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  max-height: 76vh;
+  position: relative;
+  padding: 0.75rem;
+}
+
+.viewer-lightbox__img {
+  max-width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.viewer-lightbox__info-panel {
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: #ffffff;
+  overflow-y: auto;
+}
+
+.viewer-lightbox__comment-card {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-left: 4px solid #0284c7;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.viewer-lightbox__dialog--comment-only .viewer-lightbox__comment-card {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+  border-left-color: #0d9488;
+}
+
+.viewer-lightbox__comment-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0369a1;
+  margin-bottom: 0.4rem;
+}
+
+.viewer-lightbox__comment-body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #0f172a;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.viewer-lightbox__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.85rem;
+  font-size: 0.82rem;
+}
+
+.viewer-lightbox__meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.viewer-lightbox__meta-row span {
+  font-size: 0.73rem;
+  color: #64748b;
+}
+
+/* --------------------------------------------------------------------------
+   9. ドラッグ＆ドロップオーバーレイ & レスポンシブ対応
+   -------------------------------------------------------------------------- */
+.viewer-drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 132, 199, 0.82);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.viewer-drop-overlay[hidden] {
+  display: none !important;
+}
+
+.viewer-drop-overlay__box {
+  background: #ffffff;
+  padding: 2.5rem 3rem;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35);
+}
+
+.viewer-drop-overlay__icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.viewer-drop-overlay__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.viewer-drop-overlay__sub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #475569;
+}
+
+@media (max-width: 900px) {
+  .viewer-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .viewer-workspace {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .viewer-map-container {
+    height: 54vh;
+    min-height: 320px;
+  }
+
+  .viewer-sidebar {
+    border-left: none;
+    border-top: 1px solid #cbd5e1;
+    max-height: none;
+  }
+
+  .viewer-card-list {
+    max-height: 60vh;
+  }
+
+  .viewer-lightbox__content {
+    grid-template-columns: 1fr !important;
+  }
+}

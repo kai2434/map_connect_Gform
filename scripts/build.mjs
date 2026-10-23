@@ -305,6 +305,9 @@ function buildIntoDirectory(outputDir, { regions, thumbnailDir } = {}) {
 
   console.log('[build] 3/4 HTML・CSS・Leaflet・地域サムネイルをコピーしています...');
   fs.copyFileSync(path.join(projectRoot, 'index.html'), path.join(outputDir, 'index.html'));
+  if (fs.existsSync(path.join(projectRoot, 'viewer.html'))) {
+    fs.copyFileSync(path.join(projectRoot, 'viewer.html'), path.join(outputDir, 'viewer.html'));
+  }
   copyDirSync(path.join(projectRoot, 'src', 'styles'), path.join(outputDir, 'styles'));
 
   // 地域設定で利用する公開画像だけを images/ からコピーする。
