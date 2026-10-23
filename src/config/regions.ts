@@ -11,7 +11,7 @@ export const REGIONS: RegionConfig[] = [
     id: 'kurama-kibune',
     name: '鞍馬・貴船地図',
     bounds: {
-      southWest: { lat: 35.111324, lng: 135.762632 },
+      southWest: { lat: 35.111324, lng: 135.759945 },
       northEast: { lat: 35.129903, lng: 135.775102 },
     },
   },
@@ -35,8 +35,8 @@ export const REGIONS: RegionConfig[] = [
     id: 'akame-wide',
     name: '赤目広域地図',
     bounds: {
-      southWest: { lat: 34.566351, lng: 135.743492 },
-      northEast: { lat: 34.981842, lng: 136.084418 },
+      southWest: { lat: 34.510919, lng: 135.743492 },
+      northEast: { lat: 34.987933, lng: 136.084418 },
     },
   },
 ];

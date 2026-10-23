@@ -4,9 +4,10 @@ import type { SubmissionStateSnapshot } from '../domain/submissionState';
 import type { LatLng, RegionBounds, RegionConfig } from '../types';
 
 /**
- * 国土地理院 標準地図タイルのURLテンプレート（仕様要件 1 / 2.2 / 3.2）
+ * 国土地理院 淡色地図タイルのURLテンプレート（仕様要件 1 / 2.2 / 3.2）
  */
-export const GSI_STD_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png';
+export const GSI_PALE_TILE_URL = 'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png';
+export const GSI_STD_TILE_URL = GSI_PALE_TILE_URL;
 
 /**
  * 国土地理院 出典表記HTML（仕様要件 3.2 / 6 / 11：常時表示）
@@ -154,10 +155,10 @@ export class MapController {
     // 出典表記のプレフィックスをシンプルに保ち、国土地理院の出典を常時表示
     map.attributionControl.setPrefix('Leaflet');
 
-    // 国土地理院タイルレイヤーの追加
-    const tileLayer = L.tileLayer(GSI_STD_TILE_URL, {
+    // 国土地理院タイルレイヤー（淡色地図：ズームレベル5〜18提供）の追加
+    const tileLayer = L.tileLayer(GSI_PALE_TILE_URL, {
       attribution: GSI_ATTRIBUTION_HTML,
-      minZoom: 2,
+      minZoom: 5,
       maxNativeZoom: 18,
       maxZoom: 18,
       crossOrigin: true,

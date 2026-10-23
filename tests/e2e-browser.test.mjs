@@ -27,7 +27,7 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
 const distDir = path.resolve(process.env.TEST_BUILD_DIR ?? path.join(projectRoot, 'dist'));
 const TEST_REGION = TEST_REGIONS[0];
-const TILE_URL_PATTERN = 'https://cyberjapandata.gsi.go.jp/xyz/std/**';
+const TILE_URL_PATTERN = 'https://cyberjapandata.gsi.go.jp/xyz/pale/**';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -289,7 +289,7 @@ describe('実ブラウザ（Google Chrome + Playwright）によるE2E総合検�
 
     // (2) 地理院タイルが要求・描画され、出典表記「地理院タイル」が常時表示されていることを確認
     await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-loaded').length > 0);
-    assert.ok(gsiTileRequests.length > 0, '国土地理院タイル（cyberjapandata.gsi.go.jp/xyz/std/）へのリクエストが行われていること');
+    assert.ok(gsiTileRequests.length > 0, '国土地理院の淡色地図タイル（cyberjapandata.gsi.go.jp/xyz/pale/）へのリクエストが行われていること');
 
     const attributionText = await page.locator('.leaflet-control-attribution').innerText();
     assert.ok(attributionText.includes('地理院タイル'), '地図上に出典「地理院タイル」が常時表示されていること');
